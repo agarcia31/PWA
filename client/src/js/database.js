@@ -1,37 +1,38 @@
-import { openDB } from 'idb';
-import { offlineFallback, warmStrategyCache } from 'workbox-recipes';
-import { CacheFirst } from 'workbox-strategies';
-import { registerRoute } from 'workbox-routing';
-import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { ExpirationPlugin } from 'workbox-expiration';
-import { precacheAndRoute } from 'workbox-precaching/precacheAndRoute';
+import { openDB } from "idb";
 
 const initdb = async () =>
-  openDB('jate', 1, {
+  openDB("jate", 1, {
     upgrade(db) {
-      if (db.objectStoreNames.contains('jate')) {
-        console.log('jate database already exists');
+      if (db.objectStoreNames.contains("jate")) {
+        console.log("jate database already exists");
         return;
       }
-      db.createObjectStore('jate', { keyPath: 'id', autoIncrement: true });
-      console.log('jate database created');
+      db.createObjectStore("jate", { keyPath: "id", autoIncrement: true });
+      console.log("jate database created");
     },
   });
 
+// Export a function we will use to PUT to the database.
 export const putDb = async (content) => {
-  const db = await  openDB('jate', 1);
-  const tx = db.transaction('jate', 'readwrite');
-  tx.store.add({ content });
-  await tx.done;
-  console.log('added content to jate database');
+  console.log("PUT to the database");
+  const jateDb = await openDB("jate", 1);
+  const tx = jateDb.transaction("jate", "readwrite");
+  const store = tx.objectStore("jate");
+  const request = store.put({ id: 1, value: content });
+  const result = await request;
+  console.log("result.value", result);
 };
 
+// Export a function we will use to GET to the database.
 export const getDb = async () => {
-  const db = await  openDB('jate', 1);
-  const tx = db.transaction('jate', 'readonly');
-  const content = await tx.store.getAll();
-  console.log('retrieved content from jate database');
-  return content;
+  console.log("GET from the database");
+  const jateDb = await openDB("jate", 1);
+  const tx = jateDb.transaction("jate", "readonly");
+  const store = tx.objectStore("jate");
+  const request = store.getAll();
+  const result = await request;
+  console.log("result.value", result);
+  return result.value;
 };
 
 initdb();
